@@ -181,7 +181,7 @@ if __name__ == '__main__':
 
     train_idxes = list(range(len(train_graphs)))
     best_loss = None
-    METRIC_TEMPLATE = "\033[92maverage {} of epoch {}: loss {.5f} acc {.5f} precision {.5f} recall {.5f} fpr {.5f} auc {.5f}\033[0m"
+    METRIC_TEMPLATE = "\033[92maverage {} of epoch {}: loss {:.5f} acc {:.5f} precision {:.5f} recall {:.5f} fpr {:.5f} auc {:.5f}\033[0m"
     for epoch in range(cmd_args.num_epochs):
         random.shuffle(train_idxes)
         classifier.train()
