@@ -84,6 +84,7 @@ def load_data():
             for j in range(n):
                 g.add_node(j)
                 row = f.readline().strip().split()
+                tmp = int(row[1]) + 2
                 if tmp == len(row):
                     # no node attributes
                     row = [int(w) for w in row]
