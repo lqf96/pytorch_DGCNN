@@ -86,7 +86,8 @@ if [ ${fold} == 0 ]; then
         -batch_size $bsize \
         -gm $gm \
         -mode $gpu_or_cpu \
-        -dropout $dropout
+        -dropout $dropout \
+        -printAUC true
   done
   stop=`date +%s`
   echo "End of cross-validation"
@@ -110,5 +111,6 @@ else
       -gm $gm \
       -mode $gpu_or_cpu \
       -dropout $dropout \
-      -test_number ${test_number}
+      -test_number ${test_number} \
+      -printAUC true
 fi

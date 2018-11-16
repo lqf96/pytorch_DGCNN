@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division, unicode_literals
 
 import os
 import sys
@@ -15,6 +15,9 @@ import pdb
 
 sys.path.append('%s/pytorch_structure2vec-master/s2v_lib' % os.path.dirname(os.path.realpath(__file__)))
 from pytorch_util import weights_init
+
+def sum_item(x):
+    return x.cpu().sum().item()
 
 class MLPRegression(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -61,9 +64,17 @@ class MLPClassifier(nn.Module):
         if y is not None:
             y = Variable(y)
             loss = F.nll_loss(logits, y)
-
-            pred = logits.data.max(1, keepdim=True)[1]
-            acc = pred.eq(y.data.view_as(pred)).cpu().sum().item() / float(y.size()[0])
-            return logits, loss, acc
+            # Prediction
+            pred = logits.data.max(1)[1]
+            # Accuracy
+            y_size = y.size()[0]
+            acc = sum_item(pred==y) / y_size
+            # True positive and false positive
+            tp = sum_item((pred==y)&(y!=0)) / y_size
+            fp = sum_item((pred!=0)&(y==0)) / y_size
+            # Prediction positive and actual positive
+            pp = sum_item(pred!=0) / y_size
+            ap = sum_item(y!=0) / y_size
+            return logits, loss, acc, tp, fp, pp, ap
         else:
             return logits

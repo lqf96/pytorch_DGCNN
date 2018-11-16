@@ -3,8 +3,8 @@ import numpy as np
 import random
 from tqdm import tqdm
 import os
-import cPickle as cp
-#import _pickle as cp  # python3 compatability
+#import cPickle as cp
+import _pickle as cp  # python3 compatability
 import networkx as nx
 import pdb
 import argparse
@@ -14,7 +14,7 @@ cmd_opt.add_argument('-mode', default='cpu', help='cpu/gpu')
 cmd_opt.add_argument('-gm', default='mean_field', help='mean_field/loopy_bp')
 cmd_opt.add_argument('-data', default=None, help='data folder name')
 cmd_opt.add_argument('-batch_size', type=int, default=50, help='minibatch size')
-cmd_opt.add_argument('-seed', type=int, default=1, help='seed')
+cmd_opt.add_argument('-seed', type=int, default=random.randint(0, 2**32-1), help='seed')
 cmd_opt.add_argument('-feat_dim', type=int, default=0, help='dimension of discrete node feature (maximum node tag)')
 cmd_opt.add_argument('-num_class', type=int, default=0, help='#classes')
 cmd_opt.add_argument('-fold', type=int, default=1, help='fold (1..10)')
@@ -29,6 +29,7 @@ cmd_opt.add_argument('-learning_rate', type=float, default=0.0001, help='init le
 cmd_opt.add_argument('-dropout', type=bool, default=False, help='whether add dropout after dense layer')
 cmd_opt.add_argument('-printAUC', type=bool, default=False, help='whether to print AUC (for binary classification only)')
 cmd_opt.add_argument('-extract_features', type=bool, default=False, help='whether to extract final graph features')
+cmd_opt.add_argument('-weight_decay', type=float, default=0, help='weight decay')
 
 cmd_args, _ = cmd_opt.parse_known_args()
 
@@ -83,7 +84,6 @@ def load_data():
             for j in range(n):
                 g.add_node(j)
                 row = f.readline().strip().split()
-                tmp = int(row[1]) + 2
                 if tmp == len(row):
                     # no node attributes
                     row = [int(w) for w in row]

@@ -128,7 +128,7 @@ def loop_dataset(g_list, classifier, sample_idxes, optimizer=None, bsize=cmd_arg
         batch_graph = [g_list[idx] for idx in selected_idx]
         targets = [g_list[idx].label for idx in selected_idx]
         all_targets += targets
-        logits, loss, acc = classifier(batch_graph)
+        logits, loss, acc, tp, fp, pp, ap = classifier(batch_graph)
         all_scores.append(logits[:, 1].detach())  # for binary classification
 
         if optimizer is not None:
@@ -139,7 +139,7 @@ def loop_dataset(g_list, classifier, sample_idxes, optimizer=None, bsize=cmd_arg
         loss = loss.data.cpu().numpy()
         pbar.set_description('loss: %0.5f acc: %0.5f' % (loss, acc) )
 
-        total_loss.append( np.array([loss, acc]) * len(selected_idx))
+        total_loss.append(np.array([loss, acc, tp, fp, pp, ap]) * len(selected_idx))
 
         n_samples += len(selected_idx)
     if optimizer is None:
@@ -181,19 +181,24 @@ if __name__ == '__main__':
 
     train_idxes = list(range(len(train_graphs)))
     best_loss = None
+    METRIC_TEMPLATE = "\033[92maverage {} of epoch {}: loss {.5f} acc {.5f} precision {.5f} recall {.5f} fpr {.5f} auc {.5f}\033[0m"
     for epoch in range(cmd_args.num_epochs):
         random.shuffle(train_idxes)
         classifier.train()
-        avg_loss = loop_dataset(train_graphs, classifier, train_idxes, optimizer=optimizer)
+        td = loop_dataset(train_graphs, classifier, train_idxes, optimizer=optimizer)
         if not cmd_args.printAUC:
-            avg_loss[2] = 0.0
-        print('\033[92maverage training of epoch %d: loss %.5f acc %.5f auc %.5f\033[0m' % (epoch, avg_loss[0], avg_loss[1], avg_loss[2]))
+            td[6] = 0.0
+        print(METRIC_TEMPLATE.format(
+            "training", epoch, td[0], td[1], td[2]/td[4], td[2]/td[5], td[3]/(1-td[5]), td[6]
+        ))
 
         classifier.eval()
-        test_loss = loop_dataset(test_graphs, classifier, list(range(len(test_graphs))))
+        vd = test_loss = loop_dataset(test_graphs, classifier, list(range(len(test_graphs))))
         if not cmd_args.printAUC:
-            test_loss[2] = 0.0
-        print('\033[93maverage test of epoch %d: loss %.5f acc %.5f auc %.5f\033[0m' % (epoch, test_loss[0], test_loss[1], test_loss[2]))
+            vd[6] = 0.0
+        print(METRIC_TEMPLATE.format(
+            "testing", epoch, vd[0], vd[1], vd[2]/vd[4], vd[2]/vd[5], vd[3]/(1-vd[5]), vd[6]
+        ))
 
     with open('acc_results.txt', 'a+') as f:
         f.write(str(test_loss[1]) + '\n')
